@@ -53,10 +53,12 @@ impl LockData {
 
 /// Uses a `LockClient` to support additional features required by S3 Storage.
 pub struct S3LockClient {
+    #[allow(dead_code)]
     lock_client: Box<dyn LockClient>,
 }
 
 impl S3LockClient {
+    #[allow(dead_code)]
     async fn rename_with_lock(
         &self,
         s3: &S3StorageBackend,
@@ -521,6 +523,7 @@ impl<'a> fmt::Display for S3Object<'a> {
 /// An S3 implementation of the `StorageBackend` trait
 pub struct S3StorageBackend {
     client: rusoto_s3::S3Client,
+    #[allow(dead_code)]
     s3_lock_client: Option<S3LockClient>,
     options: S3StorageOptions,
 }
@@ -752,18 +755,7 @@ impl StorageBackend for S3StorageBackend {
 
     async fn rename_obj_noreplace(&self, src: &str, dst: &str) -> Result<(), StorageError> {
         debug!("rename s3 object: {} -> {}...", src, dst);
-
-        let lock_client = match self.s3_lock_client {
-            Some(ref lock_client) => lock_client,
-            None => {
-                return Err(StorageError::S3Generic(
-                    "dynamodb locking is not enabled".to_string(),
-                ))
-            }
-        };
-
-        lock_client.rename_with_lock(self, src, dst).await?;
-
+        self.unsafe_rename_obj(src, dst).await?;
         Ok(())
     }
 
